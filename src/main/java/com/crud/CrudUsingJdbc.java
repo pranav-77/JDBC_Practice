@@ -22,8 +22,8 @@ public class CrudUsingJdbc {
 //        createSalaryTable();
 //        insertSalaryData();
 //        displayDataWithSalary();
-//        dropSalaryTable();
 //        groupByOrderByHaving();
+//        dropSalaryTable();
     }
 
     private static void dropTable() throws SQLException {
