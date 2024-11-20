@@ -23,6 +23,7 @@ public class CrudUsingJdbc {
 //        insertSalaryData();
 //        displayDataWithSalary();
 //        dropSalaryTable();
+//        groupByOrderByHaving();
     }
 
     private static void dropTable() throws SQLException {
@@ -158,6 +159,7 @@ public class CrudUsingJdbc {
         System.out.println(row + " row executed");
     }
 
+    //Salary Table
     private static void createSalaryTable() throws SQLException {
         String query = "CREATE TABLE Salary (" +
                 "emp_id INT, " +
@@ -213,6 +215,27 @@ public class CrudUsingJdbc {
             System.out.println("Salary table dropped successfully.");
         }
     }
+
+    private static void groupByOrderByHaving() throws SQLException {
+        String query = "SELECT A.city, AVG(S.salary) AS average_salary " +
+                "FROM AddressBook A " +
+                "JOIN Salary S ON A.id = S.emp_id " +
+                "GROUP BY A.city " +
+                "HAVING AVG(S.salary) > 50000 " +
+                "ORDER BY average_salary DESC";
+
+        try (Connection connection = getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(query)) {
+
+            while (result.next()) {
+                String city = result.getString("city");
+                double averageSalary = result.getDouble("average_salary");
+                System.out.println("City: " + city + ", Average Salary: " + averageSalary);
+            }
+        }
+    }
+
 
     private static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, userName, password);
