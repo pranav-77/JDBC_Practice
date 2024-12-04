@@ -23,6 +23,7 @@ public class CrudUsingJdbc {
 //        insertSalaryData();
 //        displayDataWithSalary();
 //        groupByOrderByHaving();
+//        insertSalaryDataWithSavepoint();
 //        dropSalaryTable();
     }
 
@@ -187,6 +188,53 @@ public class CrudUsingJdbc {
         }
     }
 
+    private static void insertSalaryDataWithSavepoint() {
+        String query1 = "INSERT INTO AddressBook (id, firstname, lastname, address, city, state, zip, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query2 = "INSERT INTO Salary (emp_id, salary) VALUES (?, ?)";
+
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement1 = connection.prepareStatement(query1);
+             PreparedStatement preparedStatement2 = connection.prepareStatement(query2)) {
+
+            connection.setAutoCommit(false);
+
+            preparedStatement1.setInt(1, 1);
+            preparedStatement1.setString(2, "John");
+            preparedStatement1.setString(3, "Doe");
+            preparedStatement1.setString(4, "123 Elm Street");
+            preparedStatement1.setString(5, "New York");
+            preparedStatement1.setString(6, "NY");
+            preparedStatement1.setInt(7, 10001);
+            preparedStatement1.setLong(8, 1234567890L);
+            preparedStatement1.setString(9, "john.doe@example.com");
+            preparedStatement1.executeUpdate();
+            System.out.println("Inserted data into AddressBook for employee 1.");
+
+            Savepoint savepoint1 = connection.setSavepoint("SavepointAfterAddressBook");
+
+            preparedStatement2.setInt(1, 1);
+            preparedStatement2.setInt(2, 50000);
+            preparedStatement2.executeUpdate();
+            System.out.println("Inserted data into Salary for employee 1.");
+
+            preparedStatement2.setInt(1, 999);
+            preparedStatement2.setInt(2, 70000);
+
+            try {
+                preparedStatement2.executeUpdate();
+            } catch (SQLException e) {
+                System.out.println("Error inserting data into Salary table. Rolling back to savepoint.");
+                connection.rollback(savepoint1);
+            }
+            connection.commit();
+
+        } catch (SQLException e) {
+            System.out.println("Error occurred. Rolling back the entire transaction.");
+            e.printStackTrace();
+           // connection.rollback();
+        }
+    }
+
     private static void displayDataWithSalary() throws SQLException {
         String query = "SELECT A.id, A.firstname, A.lastname, A.address, A.city, A.state, A.zip, A.phone, A.email, S.salary " +
                 "FROM AddressBook A " +
@@ -202,7 +250,7 @@ public class CrudUsingJdbc {
                 System.out.println("Zip: " + result.getInt(7));
                 System.out.println("Phone: " + result.getLong(8));
                 System.out.println("Email: " + result.getString(9));
-                System.out.println("Salary: " + result.getBigDecimal(10));
+                System.out.println("Salary: " + result.getInt(10));
                 System.out.println();
             }
         }
@@ -235,7 +283,6 @@ public class CrudUsingJdbc {
             }
         }
     }
-
 
     private static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, userName, password);
